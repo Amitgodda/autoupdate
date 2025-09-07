@@ -3,43 +3,21 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Process\Process;
 
 class UpdateController extends Controller
 {
-    public function update(Request $request)
-    {
-        $steps = [
-            'Checking repository' => 'git fetch',
-            'Pulling latest code' => 'git pull origin main', // change branch
-            'Installing dependencies' => 'composer install --no-dev --optimize-autoloader',
-            'Running migrations' => 'php artisan migrate --force',
-            'Clearing caches' => 'php artisan optimize:clear'
-        ];
+ public function update()
+{
+    // run the artisan command and capture output
+    Artisan::call('app:update');
 
-        $results = [];
-        $success = true;
+    $output = Artisan::output();
 
-        foreach ($steps as $label => $cmd) {
-            $process = Process::fromShellCommandline($cmd, base_path());
-            $process->run();
-
-            $results[] = [
-                'step' => $label,
-                'command' => $cmd,
-                'output' => $process->getOutput() ?: $process->getErrorOutput(),
-                'success' => $process->isSuccessful()
-            ];
-
-            if (!$process->isSuccessful()) {
-                $success = false;
-                break; // stop on failure
-            }
-        }
-
-        return response()->json([
-            'status' => $success ? 'success' : 'failed',
-            'steps' => $results
-        ]);
-    }
+    return response()->json([
+        'status' => str_contains($output, 'complete') ? 'success' : 'failed',
+        'output' => $output
+    ]);
+}
 }
