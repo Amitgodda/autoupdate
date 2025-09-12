@@ -9,6 +9,6 @@ Route::get('/', function () {
 Route::view('/update','update')->name('update');
 
 
-Route::view('/test','test')->name('test');
+
     Route::post('/update-app', [UpdateController::class, 'update'])->name('app.update');
 
